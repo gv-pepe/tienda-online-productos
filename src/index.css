@@ -17,8 +17,17 @@ body {
   
 }
 
+body {
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: radial-gradient(circle, #ffffff, #ffee01 30%, #eb1c74 70%);
+  overflow: hidden; /* Opcional, para evitar barras de desplazamiento */
+}
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+    monospace;  
 }

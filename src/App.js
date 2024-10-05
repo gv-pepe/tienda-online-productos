@@ -5,6 +5,7 @@ import ProductModal from './components/ProductModal';
 import Cart from './components/Cart';
 import Login from './components/Login';
 import Register from './components/Register';
+import logo from './fondo.png';
 
 const App = () => {
   const [busqueda, setBusqueda] = useState("");
@@ -17,8 +18,8 @@ const App = () => {
   const [error, setError] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
-  const [mostrarImagen, setMostrarImagen] = useState(false); // Initialize as false
-  const [mostrarApp, setMostrarApp] = useState(false); // New state to control app display
+  const [mostrarApp, setMostrarApp] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(1); // To track current image
 
   // Function to fetch products from the server
   const fetchProductos = async () => {
@@ -39,9 +40,18 @@ const App = () => {
   useEffect(() => {
     if (isAuthenticated) {
       fetchProductos();
-      setMostrarImagen(true); // Show image after authentication
+      setMostrarApp(true); // Show the app once authenticated
     }
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    // Change the image every 5 seconds (slower transition)
+    const interval = setInterval(() => {
+      setCurrentImageIndex(prevIndex => (prevIndex < 7 ? prevIndex + 1 : 1)); // Loop back to 1 after 7
+    }, 5000); // Changed to 5000ms for slower transition
+    
+    return () => clearInterval(interval); // Clean up the interval on component unmount
+  }, []);
 
   const agregarAlCarrito = (producto) => {
     const existe = carrito.find(item => item._id === producto._id);
@@ -85,77 +95,66 @@ const App = () => {
     setIsRegistering(false);
   };
 
-  const handleContinue = () => {
-    setMostrarApp(true); // Show the main app after clicking "Continuar"
-  };
-
   return (
     <div className="container mx-auto px-4">
-      {!isAuthenticated ? (
-        isRegistering ? (
-          <Register onRegister={handleLogin} onSwitchToLogin={handleSwitchToLogin} />
-        ) : (
-          <Login onLogin={handleLogin} onSwitchToRegister={handleSwitchToRegister} />
-        )
-      ) : (
-        <>
-          {mostrarImagen && !mostrarApp && ( // Show the image and button only if mostrarApp is false
-            <div className="fixed inset-0 z-50 flex items-center justify-center">
-              <img 
-                src="https://editorialtelevisa.brightspotcdn.com/dims4/default/c29de63/2147483647/strip/true/crop/1200x676+0+12/resize/1000x563!/quality/90/?url=https%3A%2F%2Fk2-prod-editorial-televisa.s3.us-east-1.amazonaws.com%2Fbrightspot%2F82%2F67%2Fe8c7d5004f948952b20f8ea3d24f%2Fpaletas-de-hielo-frutas.jpg" 
-                alt="Imagen de fondo" 
-                className="w-full h-full object-cover" 
+      {/* Header fijo y encima de todo */}
+      <Header 
+        setBusqueda={setBusqueda} 
+        busqueda={busqueda} 
+        setCarritoAbierto={setCarritoAbierto} 
+        carrito={carrito} 
+        setCategoriaSeleccionada={setCategoriaSeleccionada} 
+        className="fixed top-0 left-0 right-0 z-50 bg-white" // Fondo blanco y z-index alto
+      />
+      
+      {/* Imagen de fondo del carrusel */}
+      <div className="fixed inset-0 z-40 flex items-center justify-center">
+        {/* <img 
+          src={`https://www.heladoslamichoacana.net/images/${currentImageIndex}.jpg`} 
+          alt="Imagen de fondo" 
+          className="w-full h-full object-cover transition duration-[1500ms]" // Establecer duración de transición a 1.5s
+        /> */}
+        <div className="absolute text-center">
+        <img 
+        src={logo} 
+        alt="Logo" 
+        className="w-[500px] mx-auto" // Aumentar tamaño del logo a 500 px
+      />
+        </div>
+      </div>
+  
+      {/* Lista de productos justo debajo de la sección de imágenes */}
+      {mostrarApp && (
+        <div className={`transition-all duration-1000 ease-in-out mt-32 pt-24`}> {/* Ajustar margen superior para evitar superposición */}
+          {loading ? <div>Cargando productos...</div> : error ? <div>Error: {error}</div> : (
+            <>
+              <ProductList 
+                productos={productosFiltrados} 
+                onSelect={setProductoSeleccionado} 
               />
-              <div className="absolute text-center">
-                <h1 className="text-5xl font-bold text-black">Nombre del Negocio</h1>
-                <p className="mt-2 text-lg text-black">Información sobre el negocio aquí.</p>
-                <button 
-                  className="mt-4 bg-blue-500 text-white py-2 px-6 rounded transition duration-300 hover:bg-blue-600"
-                  onClick={handleContinue} // Call handleContinue on button click
-                >
-                  Continuar
-                </button>
-              </div>
-            </div>
-          )}
-          {mostrarApp && ( // Show the main app content when mostrarApp is true
-            <div className={`transition-all duration-1000 ease-in-out`}>
-              <Header 
-                setBusqueda={setBusqueda} 
-                busqueda={busqueda} 
-                setCarritoAbierto={setCarritoAbierto} 
-                carrito={carrito} 
-                setCategoriaSeleccionada={setCategoriaSeleccionada} 
-              />
-              {loading ? <div>Cargando productos...</div> : error ? <div>Error: {error}</div> : (
-                <>
-                  <ProductList 
-                    productos={productosFiltrados} 
-                    onSelect={setProductoSeleccionado} 
-                  />
-                  {productoSeleccionado && (
-                    <ProductModal
-                      producto={productoSeleccionado}
-                      onClose={() => setProductoSeleccionado(null)}
-                      agregarAlCarrito={agregarAlCarrito}
-                    />
-                  )}
-                  {carritoAbierto && (
-                    <Cart
-                      carrito={carrito}
-                      setCarritoAbierto={setCarritoAbierto}
-                      actualizarCantidad={actualizarCantidad}
-                      totalCarrito={totalCarrito}
-                    />
-                  )}
-                </>
+              {productoSeleccionado && (
+                <ProductModal
+                  producto={productoSeleccionado}
+                  onClose={() => setProductoSeleccionado(null)}
+                  agregarAlCarrito={agregarAlCarrito}
+                />
               )}
-            </div>
+              {carritoAbierto && (
+                <Cart
+                  carrito={carrito}
+                  setCarritoAbierto={setCarritoAbierto}
+                  actualizarCantidad={actualizarCantidad}
+                  totalCarrito={totalCarrito}
+                />
+              )}
+            </>
           )}
-        </>
+        </div>
       )}
     </div>
   );
+  
+  
 };
 
 export default App;
